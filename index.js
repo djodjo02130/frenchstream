@@ -1,11 +1,12 @@
 const { addonBuilder, serveHTTP } = require('stremio-addon-sdk');
 const { scrapeCatalog, scrapeFilmPage, scrapeSeriesPage, findBestMatch, searchFS } = require('./lib/scraper');
 const { resolveBaseUrl, getBaseUrl } = require('./lib/utils');
+const { resolve } = require('./lib/resolvers');
 const cache = require('./lib/cache');
 
 const manifest = {
     id: 'org.frenchstream.addon',
-    version: '1.0.2',
+    version: '1.1.0',
     name: 'French Stream',
     description: 'Films et Séries en streaming depuis FrenchStream',
     logo: 'https://fs9.lol/templates/starter/images/logo-fs.svg',
@@ -132,9 +133,9 @@ async function getStreamsByFsId(fsId, type, season, episode) {
             if (resp.ok) {
                 const pageUrl = resp.url;
                 if (type === 'movie') {
-                    return formatStreams(await scrapeFilmPage(pageUrl));
+                    return await formatStreams(await scrapeFilmPage(pageUrl));
                 } else {
-                    return formatStreams(await scrapeSeriesPage(pageUrl, episode || 1));
+                    return await formatStreams(await scrapeSeriesPage(pageUrl, episode || 1));
                 }
             }
         } catch {}
@@ -159,7 +160,7 @@ async function getStreamsByImdbId(imdbId, type, season, episode) {
         rawStreams = await scrapeSeriesPage(pageUrl, episode || 1);
     }
 
-    return formatStreams(rawStreams);
+    return await formatStreams(rawStreams);
 }
 
 async function getTitleFromCinemeta(imdbId, type) {
@@ -181,13 +182,42 @@ async function getTitleFromCinemeta(imdbId, type) {
     }
 }
 
-function formatStreams(rawStreams) {
-    return rawStreams.map(s => ({
-        name: `[${s.lang}] ${s.playerName}`,
-        title: `${s.playerName} - ${s.lang}`,
-        url: s.url,
-        externalUrl: s.url,
-    }));
+async function formatStreams(rawStreams) {
+    const results = await Promise.allSettled(
+        rawStreams.map(async (s) => {
+            const resolved = await resolve(s.url, s.player);
+            const name = `[${s.lang}] ${s.playerName}`;
+            const title = `${s.playerName} - ${s.lang}`;
+
+            if (resolved) {
+                const isHls = resolved.url.includes('.m3u8');
+                const stream = {
+                    name,
+                    title,
+                    url: resolved.url,
+                    behaviorHints: {},
+                };
+                if (isHls) {
+                    stream.behaviorHints.notWebReady = true;
+                }
+                if (resolved.headers && Object.keys(resolved.headers).length > 0) {
+                    stream.behaviorHints.proxyHeaders = { request: resolved.headers };
+                }
+                return stream;
+            }
+
+            // Fallback: open in browser
+            return {
+                name: name + ' (web)',
+                title,
+                externalUrl: s.url,
+            };
+        })
+    );
+
+    return results
+        .filter(r => r.status === 'fulfilled')
+        .map(r => r.value);
 }
 
 // ── Start server ────────────────────────────────────────────────────────────

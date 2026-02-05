@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.0
+
+- Ajout du module `lib/resolvers.js` : résolution des URLs embed en liens vidéo directs
+- Resolvers implémentés : Premium/FSvid (.m3u8), Vidzy (.m3u8), Uqload (.mp4), Voe (.m3u8), Dood (.mp4)
+- Fallback `externalUrl` (ouverture navigateur) pour Filmoon et Netu
+- `formatStreams()` désormais async avec résolution parallèle (`Promise.allSettled`)
+- Support `behaviorHints` : `notWebReady` pour HLS, `proxyHeaders` pour les Referer requis
+- Ajout du cache `resolved` (TTL 30min, max 300 entrées) — Dood exclu (URLs temporaires)
+- Champ `player` ajouté aux objets stream du scraper
+
 ## 1.0.2
 
 - Fix: ajout de `init: false` dans config.yaml (corrige l'erreur s6-overlay PID 1)

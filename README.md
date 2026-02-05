@@ -1,4 +1,4 @@
-# FrenchStream - Addon Stremio
+# FrenchStream - Addon Stremio / Home Assistant
 
 Addon Stremio qui agrège les liens de streaming depuis FrenchStream (films et séries).
 

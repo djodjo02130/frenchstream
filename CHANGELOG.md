@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0
+
+- Ajout du resolver Filmoon : résolution via API (challenge/attest ECDSA P-256 + déchiffrement AES-256-GCM)
+- 6/6 resolvers fonctionnels : Premium, Vidzy, Uqload, Voe, Dood, Filmoon — plus de fallback navigateur
+- Suppression de Netu (non supporté, inutile)
+
 ## 1.1.1
 
 - Fix Uqload : ajout du header Referer (requis pour servir video/mp4, sinon erreur `error_wrong_ip`)

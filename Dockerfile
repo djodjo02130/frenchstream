@@ -1,10 +1,12 @@
 ARG BUILD_FROM=node:22-alpine
 FROM ${BUILD_FROM}
 
+RUN which node >/dev/null 2>&1 || apk add --no-cache nodejs npm
+
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 COPY index.js ./
 COPY lib/ ./lib/

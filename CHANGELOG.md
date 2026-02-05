@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.2
+
+- Fix: ajout de `init: false` dans config.yaml (corrige l'erreur s6-overlay PID 1)
+- Fix: suppression des services s6 v2 obsolètes (`/etc/services.d/`)
+- Ajout de `build.yaml` avec images de base HA officielles par architecture
+- Simplification du Dockerfile (install Node.js via apk directement)
+
 ## 1.0.1
 
 - Fix: ajout du support s6-overlay pour Home Assistant (service dans `/etc/services.d/`)

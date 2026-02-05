@@ -1,0 +1,2 @@
+#!/usr/bin/with-contenv bash
+exec /run/s6/basedir/bin/halt

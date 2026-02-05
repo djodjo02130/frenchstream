@@ -15,7 +15,7 @@ COPY rootfs/ /
 EXPOSE 7000
 
 LABEL \
-  io.hass.version="1.0.0" \
+  io.hass.version="1.0.1" \
   io.hass.type="addon" \
   io.hass.arch="amd64|aarch64|armv7"
 

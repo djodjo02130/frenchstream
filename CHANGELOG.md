@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1
+
+- Fix Uqload : ajout du header Referer (requis pour servir video/mp4, sinon erreur `error_wrong_ip`)
+
 ## 1.1.0
 
 - Ajout du module `lib/resolvers.js` : résolution des URLs embed en liens vidéo directs

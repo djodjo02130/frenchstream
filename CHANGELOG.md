@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.8.1
+
+- Affichage streams simplifié : nom du player en titre, langue + titre FS en description (ex: "Vidzy" / "VF - Reconnu Coupable")
+
 ## 1.8.0
 
 - Migration du scraper vers les APIs JSON de FrenchStream (film_api.php, episodes_nop_api.php)

@@ -246,9 +246,9 @@ async function getStreamsByFsId(fsId, type, season, episode) {
     if (!pageUrl) return [];
 
     if (type === 'movie') {
-        return await formatStreams(await scrapeFilmPage(pageUrl));
+        return await formatStreams(await scrapeFilmPage(pageUrl), pageUrl);
     } else {
-        return await formatStreams(await scrapeSeriesPage(pageUrl, episode || 1));
+        return await formatStreams(await scrapeSeriesPage(pageUrl, episode || 1), pageUrl);
     }
 }
 
@@ -277,7 +277,7 @@ async function getStreamsByImdbId(imdbId, type, season, episode, lang) {
         rawStreams = await scrapeSeriesPage(pageUrl, episode || 1);
     }
 
-    return await formatStreams(rawStreams);
+    return await formatStreams(rawStreams, pageUrl);
 }
 
 async function resolveImdbIds(items, type) {
@@ -493,13 +493,21 @@ async function getMetaFromTmdb(tmdbType, tmdbId, lang) {
     }
 }
 
-async function formatStreams(rawStreams) {
+function titleFromPageUrl(pageUrl) {
+    if (!pageUrl) return '';
+    const match = pageUrl.match(/\/\d+-(.*?)\.html/);
+    if (!match) return '';
+    return match[1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+async function formatStreams(rawStreams, pageUrl) {
     console.log(`[Stream] Resolving ${rawStreams.length} streams...`);
+    const fsTitle = titleFromPageUrl(pageUrl);
     const results = await Promise.allSettled(
         rawStreams.map(async (s) => {
             const resolved = await resolve(s.url, s.player);
-            const name = `[${s.lang}] ${s.playerName}`;
-            const title = `${s.playerName} - ${s.lang}`;
+            const name = s.playerName;
+            const title = fsTitle ? `${s.lang} - ${fsTitle}` : s.lang;
 
             if (resolved) {
                 const isHls = resolved.url.includes('.m3u8');

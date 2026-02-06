@@ -6,6 +6,9 @@
   "scripts": {
     "start": "node index.js"
   },
+  "overrides": {
+    "path-to-regexp": "0.1.12"
+  },
   "dependencies": {
     "cheerio": "^1.0.0",
     "node-fetch": "^2.7.0",

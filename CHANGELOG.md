@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.1
+
+- Fix Filmoon : suivre les redirections kakaflix.lol → bysebuho.com avant résolution
+- Suppression du fallback `(web)` : les streams non résolus sont ignorés (liens morts, etc.)
+- Log des streams skippés pour debug
+
 ## 1.2.0
 
 - Ajout du resolver Filmoon : résolution via API (challenge/attest ECDSA P-256 + déchiffrement AES-256-GCM)

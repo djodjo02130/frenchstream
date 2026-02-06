@@ -6,9 +6,10 @@ Addon Stremio qui agrège les liens de streaming depuis FrenchStream (films et s
 
 - **Catalogue** : parcours paginé des films et séries disponibles sur FrenchStream
 - **Recherche** : recherche par titre directement depuis Stremio
-- **Streams** : extraction automatique des liens de lecture (Vidzy, Uqload, Voe, Dood, Filmoon, Netu, FSvid)
-- **Langues** : VF, VOSTFR, VFF, VFQ
-- **IMDB** : résolution des IDs IMDB via Cinemeta pour matcher les fiches Stremio
+- **Streams** : extraction automatique des liens de lecture (FSvid, Vidzy, Uqload, Voe, Dood, Filmoon)
+- **Langues** : VF, VOSTFR, VFF, VFQ, VO
+- **Métadonnées TMDB** : titre, synopsis, affiche, casting dans la langue de votre choix (14 langues)
+- **Résolution IMDB** : via TMDB API avec fallback Cinemeta
 - **URL dynamique** : résolution automatique du domaine courant de FrenchStream via fstream.info
 
 ## Prérequis
@@ -83,42 +84,51 @@ L'addon expose le port 7000. Ajouter dans Stremio :
 http://<IP_HOME_ASSISTANT>:7000/manifest.json
 ```
 
-### Fichiers HA
+### Configuration
 
-| Fichier | Rôle |
+| Option | Description |
 |---|---|
-| `config.yaml` | Métadonnées de l'addon (nom, ports, architectures) |
-| `repository.yaml` | Déclaration du dépôt pour la découverte HA |
-| `Dockerfile` | Image dual-purpose (standalone + HA via `BUILD_FROM`) |
+| `tmdb_api_key` | Clé API TMDB (optionnelle) — métadonnées en français |
 
 ## Structure du projet
 
 ```
 frenchstream/
-├── index.js            # Point d'entrée, handlers catalog + stream
+├── index.js                # Point d'entrée, handlers catalog + meta + stream
 ├── lib/
-│   ├── scraper.js      # Scraping des pages FS (catalogue, films, séries, recherche)
-│   ├── utils.js        # Résolution URL dynamique, helpers
-│   └── cache.js        # Cache TTL en mémoire
+│   ├── scraper.js          # APIs JSON FS (films, séries, catalogue, recherche)
+│   ├── resolvers.js        # Résolution embed → URL directe (6 players)
+│   ├── utils.js            # Résolution URL dynamique, helpers
+│   └── cache.js            # Cache TTL en mémoire
+├── test/
+│   └── smoke.js            # Smoke test (scraper + resolvers + video loading)
+├── rootfs/                 # Scripts s6-overlay (Home Assistant)
+│   └── etc/services.d/frenchstream/
+├── translations/           # Traductions options HA (en, fr)
+├── .github/workflows/      # CI/CD (build GHCR, smoke test, CodeQL)
 ├── Dockerfile
-├── .dockerignore
-├── config.yaml         # Addon Home Assistant
-├── repository.yaml     # Dépôt Home Assistant
-├── package.json
-└── package-lock.json
+├── build.yaml              # Images de base HA par architecture
+├── config.yaml             # Addon Home Assistant
+├── repository.yaml         # Dépôt Home Assistant
+├── DOCS.md                 # Documentation HA
+├── CHANGELOG.md
+└── package.json
 ```
 
 ## Architecture
 
 ```
 Stremio  →  Addon (port 7000)  →  fstream.info (résolution URL)
-                                →  FrenchStream (scraping HTML)
-                                →  Cinemeta (IMDB → titre)
+                                →  FrenchStream APIs JSON (streams)
+                                →  TMDB API (métadonnées, résolution IMDB)
+                                →  Cinemeta (fallback IMDB → titre)
 ```
 
-- **Pas d'exécution JS côté client** : toutes les données (players, épisodes) sont extraites du HTML statique via Cheerio
-- **Cache mémoire** avec TTL par namespace (recherche 15min, catalogue 30min, streams 2h, cinemeta 24h)
-- **URL dynamique** : le domaine FrenchStream change régulièrement, l'addon le résout automatiquement depuis fstream.info (cache 1h)
+- **APIs JSON** : les streams sont récupérés via `film_api.php` et `episodes_nop_api.php` (plus de scraping HTML pour les players)
+- **6 resolvers** : FSvid, Vidzy, Uqload, Voe, Dood, Filmoon — résolution embed → URL directe (HLS/MP4)
+- **Cache mémoire** avec TTL par namespace (recherche 15min, catalogue 30min, streams 2h, TMDB 24h)
+- **URL dynamique** : le domaine FrenchStream change régulièrement, résolu automatiquement depuis fstream.info (cache 1h)
+- **CI/CD** : build multi-arch (amd64, aarch64, armv7) + push GHCR + smoke test quotidien + CodeQL
 
 ## Licence
 

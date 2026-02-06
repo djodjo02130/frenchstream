@@ -121,6 +121,10 @@ builder.defineMetaHandler(async ({ type, id }) => {
 });
 
 async function findFsPageUrl(fsId, type) {
+    const cacheKey = `${type}:${fsId}`;
+    const cached = cache.get('pageurl', cacheKey);
+    if (cached) return cached;
+
     const { HEADERS } = require('./lib/utils');
     const fetch = require('node-fetch');
     const baseUrl = await resolveBaseUrl();
@@ -133,7 +137,10 @@ async function findFsPageUrl(fsId, type) {
         try {
             const testUrl = `${baseUrl}${pathPrefix}.html`;
             const resp = await fetch(testUrl, { headers: HEADERS, redirect: 'follow' });
-            if (resp.ok) return resp.url;
+            if (resp.ok) {
+                cache.set('pageurl', cacheKey, resp.url);
+                return resp.url;
+            }
         } catch {}
     }
     return null;

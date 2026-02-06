@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.0
+
+- Résolution IMDB IDs dans le catalogue via Cinemeta search — Cinemeta fournit automatiquement les métadonnées
+- Fallback `fs:` si Cinemeta ne trouve pas le titre
+- Logs catalogue et résolution IMDB
+
 ## 1.3.2
 
 - Ajout cache sur `findFsPageUrl` (TTL 2h) — évite les requêtes HTTP redondantes entre meta et stream

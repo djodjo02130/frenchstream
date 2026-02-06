@@ -206,17 +206,14 @@ async function formatStreams(rawStreams) {
                 return stream;
             }
 
-            // Fallback: open in browser
-            return {
-                name: name + ' (web)',
-                title,
-                externalUrl: s.url,
-            };
+            // Resolver failed or video dead — skip this stream
+            console.log(`[Stream] ${s.player} ${s.lang} skipped (resolve failed): ${s.url}`);
+            return null;
         })
     );
 
     return results
-        .filter(r => r.status === 'fulfilled')
+        .filter(r => r.status === 'fulfilled' && r.value)
         .map(r => r.value);
 }
 

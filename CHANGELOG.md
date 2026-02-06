@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.10.0
+
+- CI/CD : GitHub Actions build & push vers GHCR sur chaque push main
+- Images pré-buildées par architecture (amd64, aarch64, armv7)
+- config.yaml : champ `image` pour installation HA sans build local
+
 ## 1.9.1
 
 - Fix permissions scripts s6-overlay (chmod +x run/finish)

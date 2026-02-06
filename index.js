@@ -198,10 +198,17 @@ async function getStreamsByFsId(fsId, type, season, episode) {
 }
 
 async function getStreamsByImdbId(imdbId, type, season, episode) {
-    // Use cinemeta to get the title for this IMDB ID
-    const title = await getTitleFromCinemeta(imdbId, type);
-    if (!title) { console.log(`[Stream] Cinemeta: no title for ${imdbId}`); return []; }
-    console.log(`[Stream] Cinemeta: ${imdbId} → "${title}"`);
+    // Get title from TMDB (if key configured) or Cinemeta
+    let title = null;
+    if (TMDB_API_KEY) {
+        title = await getTitleFromTmdb(imdbId, type);
+        if (title) console.log(`[Stream] TMDB: ${imdbId} → "${title}"`);
+    }
+    if (!title) {
+        title = await getTitleFromCinemeta(imdbId, type);
+        if (title) console.log(`[Stream] Cinemeta: ${imdbId} → "${title}"`);
+    }
+    if (!title) { console.log(`[Stream] No title found for ${imdbId}`); return []; }
 
     // Find the best matching page on FS
     const pageUrl = await findBestMatch(title, type, season);
@@ -309,6 +316,26 @@ async function getTitleFromCinemeta(imdbId, type) {
         if (!resp.ok) return null;
         const data = await resp.json();
         const title = data.meta ? data.meta.name : null;
+        if (title) cache.set('cinemeta', cacheKey, title);
+        return title;
+    } catch {
+        return null;
+    }
+}
+
+async function getTitleFromTmdb(imdbId, type) {
+    const cacheKey = `tmdb-title:${imdbId}`;
+    const cached = cache.get('cinemeta', cacheKey);
+    if (cached) return cached;
+
+    const fetch = require('node-fetch');
+    try {
+        const url = `https://api.themoviedb.org/3/find/${imdbId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
+        const resp = await fetch(url);
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        const results = type === 'movie' ? data.movie_results : data.tv_results;
+        const title = results && results.length > 0 ? (results[0].title || results[0].name) : null;
         if (title) cache.set('cinemeta', cacheKey, title);
         return title;
     } catch {

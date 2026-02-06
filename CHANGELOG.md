@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.0
+
+- Résolution IMDB via TMDB : extraction de `data-tagz` (ID TMDB) des pages FS → API TMDB → IMDB ID
+- Clé API TMDB configurable dans Home Assistant (`tmdb_api_key`) ou via variable d'env `TMDB_API_KEY`
+- Fallback automatique sur Cinemeta si pas de clé TMDB ou si la résolution échoue
+- Cache TMDB IDs (24h)
+
 ## 1.4.0
 
 - Résolution IMDB IDs dans le catalogue via Cinemeta search — Cinemeta fournit automatiquement les métadonnées

@@ -1,6 +1,6 @@
 {
   "name": "frenchstream-stremio-addon",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Stremio addon for FrenchStream (fs9.lol)",
   "main": "index.js",
   "scripts": {

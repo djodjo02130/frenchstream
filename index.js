@@ -1,12 +1,21 @@
 const { addonBuilder, serveHTTP } = require('stremio-addon-sdk');
-const { scrapeCatalog, scrapeFilmPage, scrapeSeriesPage, findBestMatch, searchFS, scrapeMetadata } = require('./lib/scraper');
+const { scrapeCatalog, scrapeFilmPage, scrapeSeriesPage, findBestMatch, searchFS, scrapeMetadata, scrapeTmdbId } = require('./lib/scraper');
 const { resolveBaseUrl, getBaseUrl } = require('./lib/utils');
 const { resolve } = require('./lib/resolvers');
 const cache = require('./lib/cache');
 
+// ── TMDB API key (from HA config or env) ────────────────────────────────────
+let TMDB_API_KEY = process.env.TMDB_API_KEY || '';
+try {
+    const fs = require('fs');
+    const options = JSON.parse(fs.readFileSync('/data/options.json', 'utf8'));
+    if (options.tmdb_api_key) TMDB_API_KEY = options.tmdb_api_key;
+} catch {}
+if (TMDB_API_KEY) console.log('[TMDB] API key configured');
+
 const manifest = {
     id: 'org.frenchstream.addon',
-    version: '1.4.0',
+    version: '1.5.0',
     name: 'French Stream',
     description: 'Films et Séries en streaming depuis FrenchStream',
     logo: 'https://fs9.lol/templates/starter/images/logo-fs.svg',
@@ -51,7 +60,7 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
             const metas = await resolveImdbIds(filtered.map(r => {
                 const urlMatch = r.url.match(/\/(\d+)-/);
                 const fsId = urlMatch ? urlMatch[1] : r.title;
-                return { fsId, type, name: r.title, poster: r.poster };
+                return { fsId, type, name: r.title, poster: r.poster, pageUrl: r.url };
             }), type);
             return { metas };
         }
@@ -70,6 +79,7 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
             name: item.title,
             poster: item.poster,
             description: [item.quality, item.version].filter(Boolean).join(' - '),
+            pageUrl: item.url,
         })), type);
 
         return { metas };
@@ -211,7 +221,23 @@ async function getStreamsByImdbId(imdbId, type, season, episode) {
 async function resolveImdbIds(items, type) {
     const results = await Promise.allSettled(
         items.map(async (item) => {
-            const imdbId = await searchImdbId(item.name, type);
+            let imdbId = null;
+
+            // Try TMDB first if API key is configured
+            if (TMDB_API_KEY && item.pageUrl) {
+                try {
+                    const tmdbInfo = await scrapeTmdbId(item.pageUrl);
+                    if (tmdbInfo) {
+                        imdbId = await tmdbToImdb(tmdbInfo.type, tmdbInfo.id);
+                    }
+                } catch {}
+            }
+
+            // Fallback to Cinemeta title search
+            if (!imdbId) {
+                imdbId = await searchImdbId(item.name, type);
+            }
+
             return {
                 id: imdbId || `fs:${item.fsId}`,
                 type,
@@ -247,6 +273,28 @@ async function searchImdbId(title, type) {
         }
     } catch {}
     return null;
+}
+
+async function tmdbToImdb(tmdbType, tmdbId) {
+    const cacheKey = `tmdb:${tmdbType}:${tmdbId}`;
+    const cached = cache.get('cinemeta', cacheKey);
+    if (cached) return cached;
+
+    const fetch = require('node-fetch');
+    try {
+        const url = `https://api.themoviedb.org/3/${tmdbType}/${tmdbId}/external_ids?api_key=${TMDB_API_KEY}`;
+        const resp = await fetch(url);
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        const imdbId = data.imdb_id;
+        if (imdbId) {
+            cache.set('cinemeta', cacheKey, imdbId);
+            console.log(`[TMDB] ${tmdbType}/${tmdbId} → ${imdbId}`);
+        }
+        return imdbId || null;
+    } catch {
+        return null;
+    }
 }
 
 async function getTitleFromCinemeta(imdbId, type) {

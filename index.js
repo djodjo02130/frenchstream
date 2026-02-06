@@ -15,7 +15,7 @@ if (TMDB_API_KEY) console.log('[TMDB] API key configured');
 
 const manifest = {
     id: 'org.frenchstream.addon',
-    version: '1.5.2',
+    version: '1.6.0',
     name: 'French Stream',
     description: 'Films et Séries en streaming depuis FrenchStream',
     logo: 'https://fs9.lol/templates/starter/images/logo-fs.svg',
@@ -95,14 +95,57 @@ builder.defineMetaHandler(async ({ type, id }) => {
     console.log(`[Meta] Request: ${type} ${id}`);
     try {
         await resolveBaseUrl();
+
+        // ── Try TMDB (French metadata) if API key configured ──
+        if (TMDB_API_KEY) {
+            let tmdbInfo = null;
+
+            if (id.startsWith('tt')) {
+                // IMDB ID → find TMDB type + ID
+                tmdbInfo = await findTmdbInfoByImdb(id, type);
+                if (tmdbInfo) console.log(`[Meta] TMDB find: ${id} → ${tmdbInfo.type}/${tmdbInfo.id}`);
+            } else if (id.startsWith('fs:')) {
+                // FS ID → scrape page for data-tagz → TMDB ID
+                const baseId = id.split(':')[1];
+                const pageUrl = await findFsPageUrl(baseId, type);
+                if (pageUrl) {
+                    tmdbInfo = await scrapeTmdbId(pageUrl);
+                    if (tmdbInfo) console.log(`[Meta] TMDB scrape: fs:${baseId} → ${tmdbInfo.type}/${tmdbInfo.id}`);
+                }
+            }
+
+            if (tmdbInfo) {
+                const meta = await getMetaFromTmdb(tmdbInfo.type, tmdbInfo.id);
+                if (meta) {
+                    return {
+                        meta: {
+                            id,
+                            type,
+                            name: meta.name,
+                            poster: meta.poster || null,
+                            background: meta.background || null,
+                            description: meta.description || '',
+                            year: meta.year || undefined,
+                            genre: meta.genre || [],
+                            director: meta.director || [],
+                            cast: meta.cast || [],
+                            trailers: meta.trailers || [],
+                        },
+                    };
+                }
+            }
+        }
+
+        // ── Fallback: tt IDs → let Cinemeta handle it ──
         const baseId = id.startsWith('fs:') ? id.split(':')[1] : null;
         if (!baseId) return { meta: null };
 
+        // ── Fallback: fs: IDs → scrape FS page ──
         const pageUrl = await findFsPageUrl(baseId, type);
         if (!pageUrl) { console.log(`[Meta] Page not found for fs:${baseId}`); return { meta: null }; }
 
         const meta = await scrapeMetadata(pageUrl);
-        console.log(`[Meta] ${meta.name || baseId}`);
+        console.log(`[Meta] Scraped: ${meta.name || baseId}`);
 
         return {
             meta: {
@@ -339,6 +382,99 @@ async function getTitleFromTmdb(imdbId, type) {
         if (title) cache.set('cinemeta', cacheKey, title);
         return title;
     } catch {
+        return null;
+    }
+}
+
+/**
+ * Find TMDB type + ID from an IMDB ID via TMDB find endpoint.
+ * Returns { type: 'movie'|'tv', id: string } or null.
+ */
+async function findTmdbInfoByImdb(imdbId, stremioType) {
+    const cacheKey = `tmdb-info:${imdbId}`;
+    const cached = cache.get('cinemeta', cacheKey);
+    if (cached) return cached;
+
+    const fetch = require('node-fetch');
+    try {
+        const url = `https://api.themoviedb.org/3/find/${imdbId}?api_key=${TMDB_API_KEY}&external_source=imdb_id&language=fr-FR`;
+        const resp = await fetch(url);
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        const movieResults = data.movie_results || [];
+        const tvResults = data.tv_results || [];
+
+        let result = null;
+        if (stremioType === 'movie' && movieResults.length > 0) {
+            result = { type: 'movie', id: String(movieResults[0].id) };
+        } else if (stremioType === 'series' && tvResults.length > 0) {
+            result = { type: 'tv', id: String(tvResults[0].id) };
+        } else if (movieResults.length > 0) {
+            result = { type: 'movie', id: String(movieResults[0].id) };
+        } else if (tvResults.length > 0) {
+            result = { type: 'tv', id: String(tvResults[0].id) };
+        }
+
+        if (result) cache.set('cinemeta', cacheKey, result);
+        return result;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Fetch full metadata from TMDB in French.
+ * tmdbType: 'movie' or 'tv', tmdbId: TMDB numeric ID string.
+ * Returns a Stremio-compatible meta object or null.
+ */
+async function getMetaFromTmdb(tmdbType, tmdbId) {
+    const cacheKey = `tmdb-meta:${tmdbType}:${tmdbId}`;
+    const cached = cache.get('meta', cacheKey);
+    if (cached) return cached;
+
+    const fetch = require('node-fetch');
+    try {
+        const url = `https://api.themoviedb.org/3/${tmdbType}/${tmdbId}?api_key=${TMDB_API_KEY}&language=fr-FR&append_to_response=credits,videos`;
+        const resp = await fetch(url);
+        if (!resp.ok) { console.log(`[TMDB] Meta API error ${resp.status} for ${tmdbType}/${tmdbId}`); return null; }
+        const d = await resp.json();
+
+        const meta = {
+            name: d.title || d.name || null,
+            poster: d.poster_path ? `https://image.tmdb.org/t/p/w500${d.poster_path}` : null,
+            background: d.backdrop_path ? `https://image.tmdb.org/t/p/w1280${d.backdrop_path}` : null,
+            description: d.overview || '',
+            genre: (d.genres || []).map(g => g.name),
+        };
+
+        // Year
+        const dateStr = d.release_date || d.first_air_date || '';
+        if (dateStr) meta.year = parseInt(dateStr.substring(0, 4));
+
+        // Director (from credits.crew)
+        if (d.credits && d.credits.crew) {
+            meta.director = d.credits.crew
+                .filter(c => c.job === 'Director')
+                .map(c => c.name);
+        }
+
+        // Cast (top 10)
+        if (d.credits && d.credits.cast) {
+            meta.cast = d.credits.cast.slice(0, 10).map(c => c.name);
+        }
+
+        // Trailers (YouTube)
+        if (d.videos && d.videos.results) {
+            meta.trailers = d.videos.results
+                .filter(v => v.type === 'Trailer' && v.site === 'YouTube')
+                .map(v => ({ source: `ytid:${v.key}`, type: 'Trailer' }));
+        }
+
+        console.log(`[TMDB] Meta: ${tmdbType}/${tmdbId} → "${meta.name}"`);
+        cache.set('meta', cacheKey, meta);
+        return meta;
+    } catch (err) {
+        console.error(`[TMDB] Meta fetch error: ${err.message}`);
         return null;
     }
 }

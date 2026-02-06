@@ -6,7 +6,7 @@ const cache = require('./lib/cache');
 
 const manifest = {
     id: 'org.frenchstream.addon',
-    version: '1.2.1',
+    version: '1.2.2',
     name: 'French Stream',
     description: 'Films et Séries en streaming depuis FrenchStream',
     logo: 'https://fs9.lol/templates/starter/images/logo-fs.svg',

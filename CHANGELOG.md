@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.2
+
+- Ajout de logs détaillés : stream handler, resolvers (timing, cache hit), étapes Filmoon
+
 ## 1.2.1
 
 - Fix Filmoon : suivre les redirections kakaflix.lol → bysebuho.com avant résolution

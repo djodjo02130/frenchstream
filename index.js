@@ -1,5 +1,5 @@
 const { addonBuilder, serveHTTP } = require('stremio-addon-sdk');
-const { scrapeCatalog, scrapeFilmPage, scrapeSeriesPage, findBestMatch, searchFS } = require('./lib/scraper');
+const { scrapeCatalog, scrapeFilmPage, scrapeSeriesPage, findBestMatch, searchFS, scrapeMetadata } = require('./lib/scraper');
 const { resolveBaseUrl, getBaseUrl } = require('./lib/utils');
 const { resolve } = require('./lib/resolvers');
 const cache = require('./lib/cache');
@@ -10,7 +10,7 @@ const manifest = {
     name: 'French Stream',
     description: 'Films et Séries en streaming depuis FrenchStream',
     logo: 'https://fs9.lol/templates/starter/images/logo-fs.svg',
-    resources: ['catalog', 'stream'],
+    resources: ['catalog', 'meta', 'stream'],
     types: ['movie', 'series'],
     catalogs: [
         {
@@ -82,6 +82,61 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
     }
 });
 
+// ── Meta handler ───────────────────────────────────────────────────────────
+
+builder.defineMetaHandler(async ({ type, id }) => {
+    console.log(`[Meta] Request: ${type} ${id}`);
+    try {
+        await resolveBaseUrl();
+        const baseId = id.startsWith('fs:') ? id.split(':')[1] : null;
+        if (!baseId) return { meta: null };
+
+        const pageUrl = await findFsPageUrl(baseId, type);
+        if (!pageUrl) { console.log(`[Meta] Page not found for fs:${baseId}`); return { meta: null }; }
+
+        const meta = await scrapeMetadata(pageUrl);
+        console.log(`[Meta] ${meta.name || baseId}`);
+
+        return {
+            meta: {
+                id,
+                type,
+                name: meta.name || baseId,
+                poster: meta.poster || null,
+                background: meta.background || null,
+                description: meta.description || '',
+                year: meta.year || undefined,
+                genre: meta.genre || [],
+                director: meta.director || [],
+                cast: meta.cast || [],
+                trailers: meta.trailers || [],
+            },
+        };
+    } catch (err) {
+        console.error('[Meta] Error:', err.message);
+        return { meta: null };
+    }
+});
+
+async function findFsPageUrl(fsId, type) {
+    const { HEADERS } = require('./lib/utils');
+    const fetch = require('node-fetch');
+    const baseUrl = await resolveBaseUrl();
+
+    const pathPrefixes = type === 'movie'
+        ? [`/films/${fsId}-`, `/${fsId}-`]
+        : [`/s-tv/${fsId}-`, `/${fsId}-`];
+
+    for (const pathPrefix of pathPrefixes) {
+        try {
+            const testUrl = `${baseUrl}${pathPrefix}.html`;
+            const resp = await fetch(testUrl, { headers: HEADERS, redirect: 'follow' });
+            if (resp.ok) return resp.url;
+        } catch {}
+    }
+    return null;
+}
+
 // ── Stream handler ──────────────────────────────────────────────────────────
 
 builder.defineStreamHandler(async ({ type, id }) => {
@@ -118,31 +173,14 @@ builder.defineStreamHandler(async ({ type, id }) => {
 });
 
 async function getStreamsByFsId(fsId, type, season, episode) {
-    const { HEADERS } = require('./lib/utils');
-    const fetch = require('node-fetch');
-    const baseUrl = await resolveBaseUrl();
+    const pageUrl = await findFsPageUrl(fsId, type);
+    if (!pageUrl) return [];
 
-    // Try multiple URL patterns since FS uses different path prefixes
-    const pathPrefixes = type === 'movie'
-        ? [`/films/${fsId}-`, `/${fsId}-`]
-        : [`/s-tv/${fsId}-`, `/${fsId}-`];
-
-    for (const pathPrefix of pathPrefixes) {
-        try {
-            const testUrl = `${baseUrl}${pathPrefix}.html`;
-            const resp = await fetch(testUrl, { headers: HEADERS, redirect: 'follow' });
-            if (resp.ok) {
-                const pageUrl = resp.url;
-                if (type === 'movie') {
-                    return await formatStreams(await scrapeFilmPage(pageUrl));
-                } else {
-                    return await formatStreams(await scrapeSeriesPage(pageUrl, episode || 1));
-                }
-            }
-        } catch {}
+    if (type === 'movie') {
+        return await formatStreams(await scrapeFilmPage(pageUrl));
+    } else {
+        return await formatStreams(await scrapeSeriesPage(pageUrl, episode || 1));
     }
-
-    return [];
 }
 
 async function getStreamsByImdbId(imdbId, type, season, episode) {

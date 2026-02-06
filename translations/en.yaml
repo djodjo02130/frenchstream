@@ -1,0 +1,9 @@
+configuration:
+  tmdb_api_key:
+    name: TMDB API Key
+    description: >-
+      API key for The Movie Database (TMDB). Used to fetch metadata
+      (title, synopsis, poster) in your preferred language.
+      Get one free at https://www.themoviedb.org/settings/api
+network:
+  7000/tcp: Stremio addon HTTP

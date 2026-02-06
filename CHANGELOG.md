@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.9.0
+
+- Restructuration projet au standard Home Assistant addon
+- Dockerfile refait : s6-overlay (rootfs/etc/services.d/) au lieu de CMD
+- Ajout traductions options HA (en.yaml, fr.yaml)
+- Ajout DOCS.md (onglet documentation dans HA)
+- Synchronisation version manifest Stremio
+
 ## 1.8.1
 
 - Affichage streams simplifié : nom du player en titre, langue + titre FS en description (ex: "Vidzy" / "VF - Reconnu Coupable")

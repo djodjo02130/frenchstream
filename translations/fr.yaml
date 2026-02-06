@@ -1,0 +1,9 @@
+configuration:
+  tmdb_api_key:
+    name: Clé API TMDB
+    description: >-
+      Clé API pour The Movie Database (TMDB). Utilisée pour récupérer
+      les métadonnées (titre, synopsis, affiche) dans la langue choisie.
+      Obtenez-en une gratuitement sur https://www.themoviedb.org/settings/api
+network:
+  7000/tcp: Addon Stremio HTTP

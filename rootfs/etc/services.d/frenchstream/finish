@@ -1,0 +1,5 @@
+#!/usr/bin/with-contenv bashio
+
+bashio::log.warning "FrenchStream addon stopped, shutting down..."
+
+exec /run/s6/basedir/bin/halt

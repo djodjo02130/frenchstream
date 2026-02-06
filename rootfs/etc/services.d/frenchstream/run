@@ -1,0 +1,6 @@
+#!/usr/bin/with-contenv bashio
+
+bashio::log.info "Starting FrenchStream Stremio addon..."
+
+cd /app
+exec node index.js

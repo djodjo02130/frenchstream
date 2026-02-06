@@ -47,18 +47,12 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
             console.log(`[Search] "${extra.search}" (${type})`);
             const results = await searchFS(extra.search);
             console.log(`[Search] ${results.length} results`);
-            const metas = results
-                .filter(r => (type === 'movie' ? r.type === 'movie' : r.type === 'series'))
-                .map(r => {
-                    const urlMatch = r.url.match(/\/(\d+)-/);
-                    const fsId = urlMatch ? urlMatch[1] : r.title;
-                    return {
-                        id: `fs:${fsId}`,
-                        type,
-                        name: r.title,
-                        poster: r.poster,
-                    };
-                });
+            const filtered = results.filter(r => (type === 'movie' ? r.type === 'movie' : r.type === 'series'));
+            const metas = await resolveImdbIds(filtered.map(r => {
+                const urlMatch = r.url.match(/\/(\d+)-/);
+                const fsId = urlMatch ? urlMatch[1] : r.title;
+                return { fsId, type, name: r.title, poster: r.poster };
+            }), type);
             return { metas };
         }
 
@@ -69,13 +63,13 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
 
         const { items } = await scrapeCatalog(category, page);
 
-        const metas = items.map(item => ({
-            id: item.id,
+        const metas = await resolveImdbIds(items.map(item => ({
+            fsId: item.id.replace('fs:', ''),
             type,
             name: item.title,
             poster: item.poster,
             description: [item.quality, item.version].filter(Boolean).join(' - '),
-        }));
+        })), type);
 
         return { metas };
     } catch (err) {
@@ -211,6 +205,44 @@ async function getStreamsByImdbId(imdbId, type, season, episode) {
     }
 
     return await formatStreams(rawStreams);
+}
+
+async function resolveImdbIds(items, type) {
+    const results = await Promise.allSettled(
+        items.map(async (item) => {
+            const imdbId = await searchImdbId(item.name, type);
+            return {
+                id: imdbId || `fs:${item.fsId}`,
+                type,
+                name: item.name,
+                poster: item.poster,
+                description: item.description,
+            };
+        })
+    );
+    return results.filter(r => r.status === 'fulfilled').map(r => r.value);
+}
+
+async function searchImdbId(title, type) {
+    const cacheKey = `imdb:${type}:${title}`;
+    const cached = cache.get('cinemeta', cacheKey);
+    if (cached) return cached;
+
+    const fetch = require('node-fetch');
+    try {
+        // Clean title: remove year, season info
+        const cleanName = title.replace(/\s*\(?\d{4}\)?$/, '').replace(/\s*-?\s*saison\s*\d+/i, '').trim();
+        const url = `https://v3-cinemeta.strem.io/catalog/${type}/top/search=${encodeURIComponent(cleanName)}.json`;
+        const resp = await fetch(url);
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        if (data.metas && data.metas.length > 0) {
+            const imdbId = data.metas[0].id;
+            cache.set('cinemeta', cacheKey, imdbId);
+            return imdbId;
+        }
+    } catch {}
+    return null;
 }
 
 async function getTitleFromCinemeta(imdbId, type) {

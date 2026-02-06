@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.10.3
+
+- Fix build Docker multi-arch (platforms au pluriel + default ARG)
+- Fix fetch is not a function en CI (require node-fetch top level)
+- Fix dependabot.yml (ecosystem npm + ignore vulns SDK Stremio)
+- Fix CVE path-to-regexp (override 0.1.7 → 0.1.12)
+- CodeQL Action v3 → v4
+- Mise à jour README
+
 ## 1.10.2
 
 - Smoke test : recherche film/série, scrape streams, résolution par player

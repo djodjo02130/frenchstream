@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0
+
+- Ajout du meta handler : titre, poster, synopsis, année, genres, réalisateur, acteurs pour les films/séries du catalogue FS
+- Cache métadonnées (TTL 2h, max 200 entrées)
+- Refactoring `findFsPageUrl` partagé entre meta et stream handlers
+
 ## 1.2.3
 
 - Ajout timeout 5s sur tous les fetch des resolvers (évite les blocages sur serveurs lents)

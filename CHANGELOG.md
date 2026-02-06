@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.8.0
+
+- Migration du scraper vers les APIs JSON de FrenchStream (film_api.php, episodes_nop_api.php)
+- Les données players ne sont plus dans les attributs HTML data-* mais chargées via les APIs JSON internes
+- Films : GET /engine/ajax/film_api.php?id={newsId} → players par langue (VF, VOSTFR, VFQ, VFF)
+- Séries : GET /engine/ajax/episodes_nop_api.php?id={newsId} → épisodes par langue (VF, VOSTFR, VO)
+
 ## 1.7.0
 
 - Métadonnées TMDB en français (ou langue choisie) dans le meta handler : titre, synopsis, genres, casting, bande-annonce

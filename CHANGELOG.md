@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.10.4
+
+- Fix faux VF : dédupliquer si l'URL VF est identique à VOSTFR (même vidéo, mauvais tag langue)
+- Bump actions/checkout v4 → v6, actions/setup-node v4 → v6
+
 ## 1.10.3
 
 - Fix build Docker multi-arch (platforms au pluriel + default ARG)

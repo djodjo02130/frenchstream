@@ -1,6 +1,6 @@
 name: "FrenchStream"
 description: "Addon Stremio pour FrenchStream - Films et Séries en streaming"
-version: "1.5.2"
+version: "1.7.0"
 slug: "frenchstream"
 url: "https://github.com/djodjo02130/frenchstream"
 init: false

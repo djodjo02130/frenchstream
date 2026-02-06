@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.7.0
+
+- Métadonnées TMDB en français (ou langue choisie) dans le meta handler : titre, synopsis, genres, casting, bande-annonce
+- Fonctionne pour les IDs IMDB (`tt`) via `/find` et les IDs FS (`fs:`) via `data-tagz`
+- Langue configurable dans Stremio (14 langues : fr-FR, en-US, es-ES, de-DE, etc.) — défaut : fr-FR
+- Fallback inchangé sans clé TMDB (Cinemeta pour `tt`, scrape FS pour `fs:`)
+
+## 1.6.0
+
+- Ajout du meta handler TMDB : métadonnées complètes en français via l'API TMDB pour les IDs IMDB et FS
+- Poster HD (w500), background (w1280), genres, réalisateur, casting (top 10), bandes-annonces YouTube
+- Cache métadonnées TMDB (TTL 2h)
+- Fallback sur scrape FS ou Cinemeta si TMDB échoue ou pas de clé
+
 ## 1.5.2
 
 - Résolution titre via TMDB API (`/find/{imdb_id}`) pour le stream handler — plus besoin de Cinemeta si clé TMDB configurée

@@ -15,12 +15,22 @@ if (TMDB_API_KEY) console.log('[TMDB] API key configured');
 
 const manifest = {
     id: 'org.frenchstream.addon',
-    version: '1.6.0',
+    version: '1.7.0',
     name: 'French Stream',
     description: 'Films et Séries en streaming depuis FrenchStream',
     logo: 'https://fs9.lol/templates/starter/images/logo-fs.svg',
     resources: ['catalog', 'meta', 'stream'],
     types: ['movie', 'series'],
+    behaviorHints: { configurable: true },
+    config: [
+        {
+            key: 'language',
+            type: 'select',
+            title: 'Langue des métadonnées (TMDB)',
+            options: ['fr-FR', 'en-US', 'es-ES', 'de-DE', 'it-IT', 'pt-BR', 'nl-NL', 'pl-PL', 'ru-RU', 'ja-JP', 'ko-KR', 'zh-CN', 'ar-SA', 'tr-TR'],
+            default: 'fr-FR',
+        },
+    ],
     catalogs: [
         {
             type: 'movie',
@@ -91,12 +101,13 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
 
 // ── Meta handler ───────────────────────────────────────────────────────────
 
-builder.defineMetaHandler(async ({ type, id }) => {
-    console.log(`[Meta] Request: ${type} ${id}`);
+builder.defineMetaHandler(async ({ type, id, config }) => {
+    const lang = (config && config.language) || 'fr-FR';
+    console.log(`[Meta] Request: ${type} ${id} (${lang})`);
     try {
         await resolveBaseUrl();
 
-        // ── Try TMDB (French metadata) if API key configured ──
+        // ── Try TMDB (localized metadata) if API key configured ──
         if (TMDB_API_KEY) {
             let tmdbInfo = null;
 
@@ -115,7 +126,7 @@ builder.defineMetaHandler(async ({ type, id }) => {
             }
 
             if (tmdbInfo) {
-                const meta = await getMetaFromTmdb(tmdbInfo.type, tmdbInfo.id);
+                const meta = await getMetaFromTmdb(tmdbInfo.type, tmdbInfo.id, lang);
                 if (meta) {
                     return {
                         meta: {
@@ -196,7 +207,8 @@ async function findFsPageUrl(fsId, type) {
 
 // ── Stream handler ──────────────────────────────────────────────────────────
 
-builder.defineStreamHandler(async ({ type, id }) => {
+builder.defineStreamHandler(async ({ type, id, config }) => {
+    const lang = (config && config.language) || 'fr-FR';
     console.log(`[Stream] Request: ${type} ${id}`);
     try {
         await resolveBaseUrl();
@@ -219,7 +231,7 @@ builder.defineStreamHandler(async ({ type, id }) => {
         if (id.startsWith('fs:')) {
             streams = await getStreamsByFsId(baseId, type, season, episode);
         } else if (id.startsWith('tt')) {
-            streams = await getStreamsByImdbId(baseId, type, season, episode);
+            streams = await getStreamsByImdbId(baseId, type, season, episode, lang);
         }
 
         return { streams };
@@ -240,11 +252,11 @@ async function getStreamsByFsId(fsId, type, season, episode) {
     }
 }
 
-async function getStreamsByImdbId(imdbId, type, season, episode) {
+async function getStreamsByImdbId(imdbId, type, season, episode, lang) {
     // Get title from TMDB (if key configured) or Cinemeta
     let title = null;
     if (TMDB_API_KEY) {
-        title = await getTitleFromTmdb(imdbId, type);
+        title = await getTitleFromTmdb(imdbId, type, lang);
         if (title) console.log(`[Stream] TMDB: ${imdbId} → "${title}"`);
     }
     if (!title) {
@@ -366,14 +378,15 @@ async function getTitleFromCinemeta(imdbId, type) {
     }
 }
 
-async function getTitleFromTmdb(imdbId, type) {
-    const cacheKey = `tmdb-title:${imdbId}`;
+async function getTitleFromTmdb(imdbId, type, lang) {
+    lang = lang || 'fr-FR';
+    const cacheKey = `tmdb-title:${imdbId}:${lang}`;
     const cached = cache.get('cinemeta', cacheKey);
     if (cached) return cached;
 
     const fetch = require('node-fetch');
     try {
-        const url = `https://api.themoviedb.org/3/find/${imdbId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
+        const url = `https://api.themoviedb.org/3/find/${imdbId}?api_key=${TMDB_API_KEY}&external_source=imdb_id&language=${lang}`;
         const resp = await fetch(url);
         if (!resp.ok) return null;
         const data = await resp.json();
@@ -397,7 +410,7 @@ async function findTmdbInfoByImdb(imdbId, stremioType) {
 
     const fetch = require('node-fetch');
     try {
-        const url = `https://api.themoviedb.org/3/find/${imdbId}?api_key=${TMDB_API_KEY}&external_source=imdb_id&language=fr-FR`;
+        const url = `https://api.themoviedb.org/3/find/${imdbId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
         const resp = await fetch(url);
         if (!resp.ok) return null;
         const data = await resp.json();
@@ -423,18 +436,19 @@ async function findTmdbInfoByImdb(imdbId, stremioType) {
 }
 
 /**
- * Fetch full metadata from TMDB in French.
- * tmdbType: 'movie' or 'tv', tmdbId: TMDB numeric ID string.
+ * Fetch full metadata from TMDB in the requested language.
+ * tmdbType: 'movie' or 'tv', tmdbId: TMDB numeric ID string, lang: TMDB locale.
  * Returns a Stremio-compatible meta object or null.
  */
-async function getMetaFromTmdb(tmdbType, tmdbId) {
-    const cacheKey = `tmdb-meta:${tmdbType}:${tmdbId}`;
+async function getMetaFromTmdb(tmdbType, tmdbId, lang) {
+    lang = lang || 'fr-FR';
+    const cacheKey = `tmdb-meta:${tmdbType}:${tmdbId}:${lang}`;
     const cached = cache.get('meta', cacheKey);
     if (cached) return cached;
 
     const fetch = require('node-fetch');
     try {
-        const url = `https://api.themoviedb.org/3/${tmdbType}/${tmdbId}?api_key=${TMDB_API_KEY}&language=fr-FR&append_to_response=credits,videos`;
+        const url = `https://api.themoviedb.org/3/${tmdbType}/${tmdbId}?api_key=${TMDB_API_KEY}&language=${lang}&append_to_response=credits,videos`;
         const resp = await fetch(url);
         if (!resp.ok) { console.log(`[TMDB] Meta API error ${resp.status} for ${tmdbType}/${tmdbId}`); return null; }
         const d = await resp.json();

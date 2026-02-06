@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.9.1
+
+- Fix permissions scripts s6-overlay (chmod +x run/finish)
+
 ## 1.9.0
 
 - Restructuration projet au standard Home Assistant addon

@@ -26,3 +26,13 @@ jobs:
 
       - name: Run smoke test
         run: node test/smoke.js
+
+      - name: Pushover notification on failure
+        if: failure()
+        run: |
+          curl -s -F "token=${{ secrets.PUSHOVER_APIKEY }}" \
+               -F "user=${{ secrets.PUSHOVER_USERKEY }}" \
+               -F "title=FrenchStream Smoke Test FAILED" \
+               -F "message=Le smoke test a échoué sur ${{ github.ref_name }} (run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" \
+               -F "priority=1" \
+               https://api.pushover.net/1/messages.json

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.10.1
+
+- Sécurité : ajout workflow CodeQL (analyse code hebdomadaire)
+- Ajout SECURITY.md (politique de sécurité)
+- Ajout LICENSE (MIT)
+- Activation Dependabot vulnerability alerts
+
 ## 1.10.0
 
 - CI/CD : GitHub Actions build & push vers GHCR sur chaque push main

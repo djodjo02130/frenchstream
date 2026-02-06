@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.3
+
+- Ajout timeout 5s sur tous les fetch des resolvers (évite les blocages sur serveurs lents)
+
 ## 1.2.2
 
 - Ajout de logs détaillés : stream handler, resolvers (timing, cache hit), étapes Filmoon

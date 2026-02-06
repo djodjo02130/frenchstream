@@ -44,7 +44,9 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
         await resolveBaseUrl();
         // Handle search
         if (extra && extra.search) {
+            console.log(`[Search] "${extra.search}" (${type})`);
             const results = await searchFS(extra.search);
+            console.log(`[Search] ${results.length} results`);
             const metas = results
                 .filter(r => (type === 'movie' ? r.type === 'movie' : r.type === 'series'))
                 .map(r => {

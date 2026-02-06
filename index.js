@@ -85,6 +85,7 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
 // ── Stream handler ──────────────────────────────────────────────────────────
 
 builder.defineStreamHandler(async ({ type, id }) => {
+    console.log(`[Stream] Request: ${type} ${id}`);
     try {
         await resolveBaseUrl();
         // Parse the ID: can be "fs:12345", "fs:12345:1:3", "tt1234567", "tt1234567:1:3"
@@ -147,11 +148,13 @@ async function getStreamsByFsId(fsId, type, season, episode) {
 async function getStreamsByImdbId(imdbId, type, season, episode) {
     // Use cinemeta to get the title for this IMDB ID
     const title = await getTitleFromCinemeta(imdbId, type);
-    if (!title) return [];
+    if (!title) { console.log(`[Stream] Cinemeta: no title for ${imdbId}`); return []; }
+    console.log(`[Stream] Cinemeta: ${imdbId} → "${title}"`);
 
     // Find the best matching page on FS
     const pageUrl = await findBestMatch(title, type, season);
-    if (!pageUrl) return [];
+    if (!pageUrl) { console.log(`[Stream] No match on FS for "${title}"`); return []; }
+    console.log(`[Stream] Matched: ${pageUrl}`);
 
     let rawStreams;
     if (type === 'movie') {
@@ -183,6 +186,7 @@ async function getTitleFromCinemeta(imdbId, type) {
 }
 
 async function formatStreams(rawStreams) {
+    console.log(`[Stream] Resolving ${rawStreams.length} streams...`);
     const results = await Promise.allSettled(
         rawStreams.map(async (s) => {
             const resolved = await resolve(s.url, s.player);

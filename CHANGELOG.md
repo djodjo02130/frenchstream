@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.1
+
+- Log des recherches catalogue (query + nombre de résultats)
+
 ## 1.3.0
 
 - Ajout du meta handler : titre, poster, synopsis, année, genres, réalisateur, acteurs pour les films/séries du catalogue FS

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.5
+
+- Fix faux VF : si `vostfr` existe dans les langs d'un player, `default` = VOSTFR (pas VF)
+
 ## 1.10.4
 
 - Fix faux VF : dédupliquer si l'URL VF est identique à VOSTFR (même vidéo, mauvais tag langue)

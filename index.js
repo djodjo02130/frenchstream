@@ -61,6 +61,7 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
         const skip = extra && extra.skip ? parseInt(extra.skip) : 0;
         const page = Math.floor(skip / 18) + 1;
 
+        console.log(`[Catalog] ${type} page ${page}`);
         const { items } = await scrapeCatalog(category, page);
 
         const metas = await resolveImdbIds(items.map(item => ({
@@ -220,7 +221,10 @@ async function resolveImdbIds(items, type) {
             };
         })
     );
-    return results.filter(r => r.status === 'fulfilled').map(r => r.value);
+    const resolved = results.filter(r => r.status === 'fulfilled').map(r => r.value);
+    const imdbCount = resolved.filter(r => r.id.startsWith('tt')).length;
+    console.log(`[Catalog] ${resolved.length} items, ${imdbCount} IMDB resolved`);
+    return resolved;
 }
 
 async function searchImdbId(title, type) {

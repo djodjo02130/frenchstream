@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.10.2
+
+- Smoke test : recherche film/série, scrape streams, résolution par player
+- Workflow CI quotidien + sur chaque push/PR
+- Lancement manuel possible (workflow_dispatch)
+
 ## 1.10.1
 
 - Sécurité : ajout workflow CodeQL (analyse code hebdomadaire)

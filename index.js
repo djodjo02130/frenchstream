@@ -229,6 +229,7 @@ async function resolveImdbIds(items, type) {
                     const tmdbInfo = await scrapeTmdbId(item.pageUrl);
                     if (tmdbInfo) {
                         imdbId = await tmdbToImdb(tmdbInfo.type, tmdbInfo.id);
+                        if (imdbId) console.log(`[Resolve] "${item.name}" → TMDB ${tmdbInfo.type}/${tmdbInfo.id} → ${imdbId}`);
                     }
                 } catch {}
             }
@@ -236,6 +237,8 @@ async function resolveImdbIds(items, type) {
             // Fallback to Cinemeta title search
             if (!imdbId) {
                 imdbId = await searchImdbId(item.name, type);
+                if (imdbId) console.log(`[Resolve] "${item.name}" → Cinemeta → ${imdbId}`);
+                else console.log(`[Resolve] "${item.name}" → not found`);
             }
 
             return {
@@ -284,13 +287,10 @@ async function tmdbToImdb(tmdbType, tmdbId) {
     try {
         const url = `https://api.themoviedb.org/3/${tmdbType}/${tmdbId}/external_ids?api_key=${TMDB_API_KEY}`;
         const resp = await fetch(url);
-        if (!resp.ok) return null;
+        if (!resp.ok) { console.log(`[TMDB] API error ${resp.status} for ${tmdbType}/${tmdbId}`); return null; }
         const data = await resp.json();
         const imdbId = data.imdb_id;
-        if (imdbId) {
-            cache.set('cinemeta', cacheKey, imdbId);
-            console.log(`[TMDB] ${tmdbType}/${tmdbId} → ${imdbId}`);
-        }
+        if (imdbId) cache.set('cinemeta', cacheKey, imdbId);
         return imdbId || null;
     } catch {
         return null;

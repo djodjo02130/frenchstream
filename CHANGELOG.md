@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.2
+
+- Ajout cache sur `findFsPageUrl` (TTL 2h) — évite les requêtes HTTP redondantes entre meta et stream
+
 ## 1.3.1
 
 - Log des recherches catalogue (query + nombre de résultats)

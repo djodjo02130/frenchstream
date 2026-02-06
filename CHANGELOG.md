@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.1
+
+- Ajout logs détaillés résolution IMDB : méthode utilisée (TMDB/Cinemeta), erreurs API, scrape data-tagz
+
 ## 1.5.0
 
 - Résolution IMDB via TMDB : extraction de `data-tagz` (ID TMDB) des pages FS → API TMDB → IMDB ID

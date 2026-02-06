@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.2
+
+- Résolution titre via TMDB API (`/find/{imdb_id}`) pour le stream handler — plus besoin de Cinemeta si clé TMDB configurée
+- Fallback automatique sur Cinemeta si TMDB indisponible
+
 ## 1.5.1
 
 - Ajout logs détaillés résolution IMDB : méthode utilisée (TMDB/Cinemeta), erreurs API, scrape data-tagz

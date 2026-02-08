@@ -248,7 +248,8 @@ async function getStreamsByFsId(fsId, type, season, episode) {
     if (type === 'movie') {
         return await formatStreams(await scrapeFilmPage(pageUrl), pageUrl);
     } else {
-        return await formatStreams(await scrapeSeriesPage(pageUrl, episode || 1), pageUrl);
+        const ep = episode || 1;
+        return await formatStreams(await scrapeSeriesPage(pageUrl, ep), pageUrl, season, ep);
     }
 }
 
@@ -271,13 +272,14 @@ async function getStreamsByImdbId(imdbId, type, season, episode, lang) {
     console.log(`[Stream] Matched: ${pageUrl}`);
 
     let rawStreams;
+    const ep = episode || 1;
     if (type === 'movie') {
         rawStreams = await scrapeFilmPage(pageUrl);
     } else {
-        rawStreams = await scrapeSeriesPage(pageUrl, episode || 1);
+        rawStreams = await scrapeSeriesPage(pageUrl, ep);
     }
 
-    return await formatStreams(rawStreams, pageUrl);
+    return await formatStreams(rawStreams, pageUrl, type === 'series' ? season : null, type === 'series' ? ep : null);
 }
 
 async function resolveImdbIds(items, type) {
@@ -502,15 +504,18 @@ function titleFromPageUrl(pageUrl) {
 
 const LANG_FLAGS = { VF: '🇫🇷 VF', VOSTFR: '🇫🇷🇬🇧 VOSTFR', VFQ: '🇨🇦 VFQ', VFF: '🇫🇷 VFF', VO: '🇬🇧 VO' };
 
-async function formatStreams(rawStreams, pageUrl) {
+async function formatStreams(rawStreams, pageUrl, season, episode) {
     console.log(`[Stream] Resolving ${rawStreams.length} streams...`);
     const fsTitle = titleFromPageUrl(pageUrl);
+    const descParts = [];
+    if (fsTitle) descParts.push(fsTitle);
+    if (season != null && episode != null) descParts.push(`Saison ${season} - Épisode ${episode}`);
+    const description = descParts.join('\n');
     const results = await Promise.allSettled(
         rawStreams.map(async (s) => {
             const resolved = await resolve(s.url, s.player);
             const langLabel = LANG_FLAGS[s.lang] || s.lang;
             const name = `${langLabel}\n${s.playerName}`;
-            const description = fsTitle || '';
 
             if (resolved) {
                 const isHls = resolved.url.includes('.m3u8');

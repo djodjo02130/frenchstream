@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.10.10
+
+- Titre FS depuis `og:title` au lieu du slug URL (via scrapeMetadata, caché)
+- scrapeMetadata : priorité og:title > h1 > title
+
 ## 1.10.9
 
 - Drapeaux après l'intitulé langue : VF 🇫🇷, VOSTFR 🇬🇧+🇫🇷, VFQ 🇨🇦, VFF 🇫🇷, VO 🇬🇧

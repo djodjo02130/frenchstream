@@ -15,7 +15,7 @@ if (TMDB_API_KEY) console.log('[TMDB] API key configured');
 
 const manifest = {
     id: 'org.frenchstream.addon',
-    version: '1.10.5',
+    version: '1.10.6',
     name: 'French Stream',
     description: 'Films et Séries en streaming depuis FrenchStream',
     logo: 'https://fs9.lol/templates/starter/images/logo-fs.svg',
@@ -500,6 +500,8 @@ function titleFromPageUrl(pageUrl) {
     return match[1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
+const LANG_FLAGS = { VF: '🇫🇷 VF', VOSTFR: '🇬🇧 VOSTFR', VFQ: '🇨🇦 VFQ', VFF: '🇫🇷 VFF', VO: '🇬🇧 VO' };
+
 async function formatStreams(rawStreams, pageUrl) {
     console.log(`[Stream] Resolving ${rawStreams.length} streams...`);
     const fsTitle = titleFromPageUrl(pageUrl);
@@ -507,7 +509,8 @@ async function formatStreams(rawStreams, pageUrl) {
         rawStreams.map(async (s) => {
             const resolved = await resolve(s.url, s.player);
             const name = s.playerName;
-            const title = fsTitle ? `${s.lang} - ${fsTitle}` : s.lang;
+            const langLabel = LANG_FLAGS[s.lang] || s.lang;
+            const title = fsTitle ? `${langLabel} - ${fsTitle}` : langLabel;
 
             if (resolved) {
                 const isHls = resolved.url.includes('.m3u8');

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.10.6
+
+- Drapeaux emoji pour les langues : 🇫🇷 VF, 🇬🇧 VOSTFR, 🇨🇦 VFQ, 🇫🇷 VFF, 🇬🇧 VO
+- Notif Pushover si le smoke test échoue
+
 ## 1.10.5
 
 - Fix faux VF : si `vostfr` existe dans les langs d'un player, `default` = VOSTFR (pas VF)

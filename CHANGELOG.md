@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.9
+
+- Drapeaux après l'intitulé langue : VF 🇫🇷, VOSTFR 🇬🇧+🇫🇷, VFQ 🇨🇦, VFF 🇫🇷, VO 🇬🇧
+
 ## 1.10.8
 
 - Langue avec drapeaux en dernière ligne de la description (pas dans le name)

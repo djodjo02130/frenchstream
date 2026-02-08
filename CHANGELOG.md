@@ -1,8 +1,15 @@
 # Changelog
 
+## 1.10.7
+
+- Drapeaux emoji pour les langues dans le name (gras) : 🇫🇷 VF, 🇫🇷🇬🇧 VOSTFR, 🇨🇦 VFQ, 🇫🇷 VFF, 🇬🇧 VO
+- Streams : utilise `description` au lieu de `title` (deprecated)
+- Séries : affichage Saison et Épisode dans la description
+- Notif Pushover si le smoke test échoue
+
 ## 1.10.6
 
-- Drapeaux emoji pour les langues : 🇫🇷 VF, 🇬🇧 VOSTFR, 🇨🇦 VFQ, 🇫🇷 VFF, 🇬🇧 VO
+- Drapeaux emoji pour les langues
 - Notif Pushover si le smoke test échoue
 
 ## 1.10.5

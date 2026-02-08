@@ -515,13 +515,14 @@ async function formatStreams(rawStreams, pageUrl, season, episode) {
         rawStreams.map(async (s) => {
             const resolved = await resolve(s.url, s.player);
             const langLabel = LANG_FLAGS[s.lang] || s.lang;
-            const name = `${langLabel}\n${s.playerName}`;
+            const name = s.playerName;
+            const streamDesc = [...descParts, langLabel].join('\n');
 
             if (resolved) {
                 const isHls = resolved.url.includes('.m3u8');
                 const stream = {
                     name,
-                    description,
+                    description: streamDesc,
                     url: resolved.url,
                     behaviorHints: {},
                 };

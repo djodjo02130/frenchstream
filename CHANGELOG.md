@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.8
+
+- Langue avec drapeaux en dernière ligne de la description (pas dans le name)
+
 ## 1.10.7
 
 - Drapeaux emoji pour les langues dans le name (gras) : 🇫🇷 VF, 🇫🇷🇬🇧 VOSTFR, 🇨🇦 VFQ, 🇫🇷 VFF, 🇬🇧 VO

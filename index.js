@@ -506,7 +506,12 @@ const LANG_FLAGS = { VF: 'VF 🇫🇷', VOSTFR: 'VOSTFR 🇬🇧+🇫🇷', VFQ:
 
 async function formatStreams(rawStreams, pageUrl, season, episode) {
     console.log(`[Stream] Resolving ${rawStreams.length} streams...`);
-    const fsTitle = titleFromPageUrl(pageUrl);
+    let fsTitle = '';
+    try {
+        const meta = await scrapeMetadata(pageUrl);
+        if (meta && meta.name) fsTitle = meta.name;
+    } catch {}
+    if (!fsTitle) fsTitle = titleFromPageUrl(pageUrl);
     const descParts = [];
     if (fsTitle) descParts.push(fsTitle);
     if (season != null && episode != null) descParts.push(`Saison ${season} - Épisode ${episode}`);

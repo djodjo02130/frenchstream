@@ -502,7 +502,7 @@ function titleFromPageUrl(pageUrl) {
     return match[1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
-const LANG_FLAGS = { VF: '🇫🇷 VF', VOSTFR: '🇬🇧🇫🇷 VOSTFR', VFQ: '🇨🇦 VFQ', VFF: '🇫🇷 VFF', VO: '🇬🇧 VO' };
+const LANG_FLAGS = { VF: '🇫🇷 VF', VOSTFR: '🇬🇧+🇫🇷 VOSTFR', VFQ: '🇨🇦 VFQ', VFF: '🇫🇷 VFF', VO: '🇬🇧 VO' };
 
 async function formatStreams(rawStreams, pageUrl, season, episode) {
     console.log(`[Stream] Resolving ${rawStreams.length} streams...`);

@@ -500,7 +500,7 @@ function titleFromPageUrl(pageUrl) {
     return match[1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
-const LANG_FLAGS = { VF: '🇫🇷 VF', VOSTFR: '🇬🇧 VOSTFR', VFQ: '🇨🇦 VFQ', VFF: '🇫🇷 VFF', VO: '🇬🇧 VO' };
+const LANG_FLAGS = { VF: '🇫🇷 VF', VOSTFR: '🇫🇷🇬🇧 VOSTFR', VFQ: '🇨🇦 VFQ', VFF: '🇫🇷 VFF', VO: '🇬🇧 VO' };
 
 async function formatStreams(rawStreams, pageUrl) {
     console.log(`[Stream] Resolving ${rawStreams.length} streams...`);
@@ -508,15 +508,15 @@ async function formatStreams(rawStreams, pageUrl) {
     const results = await Promise.allSettled(
         rawStreams.map(async (s) => {
             const resolved = await resolve(s.url, s.player);
-            const name = s.playerName;
             const langLabel = LANG_FLAGS[s.lang] || s.lang;
-            const title = fsTitle ? `${langLabel} - ${fsTitle}` : langLabel;
+            const name = `${langLabel}\n${s.playerName}`;
+            const description = fsTitle || '';
 
             if (resolved) {
                 const isHls = resolved.url.includes('.m3u8');
                 const stream = {
                     name,
-                    title,
+                    description,
                     url: resolved.url,
                     behaviorHints: {},
                 };

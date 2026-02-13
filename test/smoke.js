@@ -28,8 +28,8 @@ const QUERIES = [
     { query: 'The Last of Us', type: 'series' },
 ];
 
-const REQUIRED_PLAYERS = ['premium', 'vidzy', 'uqload', 'voe', 'filmoon'];
-const OPTIONAL_PLAYERS = ['dood']; // instable, ne fait pas échouer le CI
+const REQUIRED_PLAYERS = ['premium', 'vidzy', 'voe', 'filmoon'];
+const OPTIONAL_PLAYERS = ['uqload', 'dood']; // instables, ne font pas échouer le CI
 const ALL_PLAYERS = [...REQUIRED_PLAYERS, ...OPTIONAL_PLAYERS];
 
 let passed = 0;

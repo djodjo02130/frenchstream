@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.12
+
+- Fix séries : endpoint API migré de `episodes_nop_api.php?id=` vers `sx.php?p=` (l'ancien retourne 404)
+
 ## 1.10.10
 
 - Titre FS depuis `og:title` au lieu du slug URL (via scrapeMetadata, caché)

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.10.14
+
+- Nouveaux catalogues : Box Office (homepage), Films Commu (`/film-commu/`), Séries Commu (`/serie-commu/`)
+- scrapeCatalog accepte maintenant un path FS arbitraire et le type Stremio
+- Sélecteur scopé sur `#dle-content .short` (homepage a des `.short` hors-pagination)
+
 ## 1.10.13
 
 - Fix catalogue : extraction de l'ID FS depuis `/index.php?newsid=NNN` (le HTML a migré du format slug `/films/NNN-titre.html` vers `?newsid=`)

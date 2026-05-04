@@ -15,7 +15,7 @@ if (TMDB_API_KEY) console.log('[TMDB] API key configured');
 
 const manifest = {
     id: 'org.frenchstream.addon',
-    version: '1.10.13',
+    version: '1.10.14',
     name: 'French Stream',
     description: 'Films et Séries en streaming depuis FrenchStream',
     logo: 'https://fs9.lol/templates/starter/images/logo-fs.svg',
@@ -50,6 +50,24 @@ const manifest = {
                 { name: 'search', isRequired: false },
             ],
         },
+        {
+            type: 'movie',
+            id: 'frenchstream-boxoffice',
+            name: 'FrenchStream - Box Office',
+            extra: [{ name: 'skip', isRequired: false }],
+        },
+        {
+            type: 'movie',
+            id: 'frenchstream-films-commu',
+            name: 'FrenchStream - Films Commu',
+            extra: [{ name: 'skip', isRequired: false }],
+        },
+        {
+            type: 'series',
+            id: 'frenchstream-series-commu',
+            name: 'FrenchStream - Séries Commu',
+            extra: [{ name: 'skip', isRequired: false }],
+        },
     ],
     idPrefixes: ['tt', 'fs:'],
 };
@@ -75,13 +93,22 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
             return { metas };
         }
 
-        // Catalog browsing
-        const category = type === 'movie' ? 'films' : 's-tv';
+        // Catalog browsing — map catalog id to FS URL path
+        const CATALOG_PATHS = {
+            'frenchstream-films': 'films',
+            'frenchstream-series': 's-tv',
+            'frenchstream-boxoffice': '',
+            'frenchstream-films-commu': 'film-commu',
+            'frenchstream-series-commu': 'serie-commu',
+        };
+        const pathSegment = CATALOG_PATHS[id];
+        if (pathSegment === undefined) { console.log(`[Catalog] unknown id ${id}`); return { metas: [] }; }
+
         const skip = extra && extra.skip ? parseInt(extra.skip) : 0;
         const page = Math.floor(skip / 18) + 1;
 
-        console.log(`[Catalog] ${type} page ${page}`);
-        const { items } = await scrapeCatalog(category, page);
+        console.log(`[Catalog] ${id} page ${page}`);
+        const { items } = await scrapeCatalog(pathSegment, page, type);
 
         const metas = await resolveImdbIds(items.map(item => ({
             fsId: item.id.replace('fs:', ''),

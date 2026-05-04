@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.13
+
+- Fix catalogue : extraction de l'ID FS depuis `/index.php?newsid=NNN` (le HTML a migré du format slug `/films/NNN-titre.html` vers `?newsid=`)
+
 ## 1.10.12
 
 - Fix séries : endpoint API migré de `episodes_nop_api.php?id=` vers `sx.php?p=` (l'ancien retourne 404)

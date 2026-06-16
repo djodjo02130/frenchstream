@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.15
+
+- Fix anti-bot : le site sert une page de challenge (889 o) qui pose le cookie `fsschal=1` via JS puis recharge. Le scraper recevait ce stub → catalogues vides (0 items). Envoi direct du cookie `fsschal=1` dans `HEADERS` (`lib/utils.js`).
+
 ## 1.10.14
 
 - Nouveaux catalogues : Box Office (homepage), Films Commu (`/film-commu/`), Séries Commu (`/serie-commu/`)

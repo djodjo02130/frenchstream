@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.10.16
+
+- Fix URL de base : `fstream.info` ne publie plus le miroir dans le `href` de `#mainUrl` (`href="#"` + redirection `onclick`). Le scraper prenait `#` comme BASE_URL → tout cassé (`Only absolute URLs are supported`). Résolution en chaîne landing → passerelle (`var FS_MIRROR`) → miroir, 3 sauts max (`lib/utils.js`, `parseMirrorFromHtml`).
+- Fix premium (FSvid) + vidzy : la source n'est plus un littéral. `src` est une IIFE qui XOR-décode un blob base64 avec une clé dérivée de `location.hostname`, et renvoie un leurre `/troll/master.m3u8` si l'hôte ne colle pas. L'IIFE est maintenant évaluée dans un sandbox `vm` avec le vrai hostname (`decodeObfuscatedSource`), donc robuste aux changements de constantes.
+- Fix filmoon : nouveau backend (vidaraa.cc) en `POST /api/stream {filecode, device}` → `streaming_url`. L'ancien flux 5 étapes (details → settings → challenge → attest ECDSA → playback → AES-GCM) reste en fallback pour les domaines legacy (bysebuho/bysewihe), qui répondent désormais `428 captcha_required` sur playback — non résolvable côté serveur.
+- Fix uqload : la source est passée dans le JS packé (`sources:[{file:"…m3u8"}]`) au lieu de `sources:["…mp4"]` en clair — dépaquetage Dean Edwards ajouté.
+- dood : `playmogo.com` est derrière un challenge JS Cloudflare (403) — non résolvable sans navigateur, reste optionnel.
+- Fallback `BASE_URL` : `fs9.lol` → `fs16.lol`.
+- Tests : `test/base-url.js` et `test/obfuscated-source.js` (unitaires, hors réseau) ; le smoke test complète les vieux titres par des fiches récentes du catalogue (les anciennes ne pointent que sur le backend filmoon legacy).
+
 ## 1.10.15
 
 - Fix anti-bot : le site sert une page de challenge (889 o) qui pose le cookie `fsschal=1` via JS puis recharge. Le scraper recevait ce stub → catalogues vides (0 items). Envoi direct du cookie `fsschal=1` dans `HEADERS` (`lib/utils.js`).

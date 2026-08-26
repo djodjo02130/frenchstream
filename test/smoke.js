@@ -11,7 +11,7 @@
  */
 
 const fetch = require('node-fetch');
-const { searchFS, scrapeFilmPage, scrapeSeriesPage } = require('../lib/scraper');
+const { searchFS, scrapeFilmPage, scrapeSeriesPage, scrapeCatalog } = require('../lib/scraper');
 const { resolveBaseUrl } = require('../lib/utils');
 const { resolve } = require('../lib/resolvers');
 
@@ -186,6 +186,54 @@ async function main() {
                     resolvedPlayers[stream.player] = { ...resolved, query, verified: false };
                     ok(`${stream.player}: resolved (video unverified) (${result.title})`);
                 }
+            }
+        }
+    }
+
+    // Les titres ci-dessus sont d'anciennes fiches : leurs liens filmoon pointent
+    // encore sur le backend legacy (playback derrière un captcha). Compléter avec
+    // des fiches récentes de la homepage pour couvrir les backends courants.
+    const stillMissingRequired = REQUIRED_PLAYERS.filter(p => !resolvedPlayers[p]);
+    if (stillMissingRequired.length > 0) {
+        console.log('');
+        console.log(`── [catalogue] fiches récentes (missing: ${stillMissingRequired.join(', ')}) ──`);
+
+        let recent = [];
+        try {
+            const catalog = await scrapeCatalog('', 1, 'movie');
+            recent = (catalog && catalog.items) || [];
+        } catch (err) {
+            info(`catalog failed: ${err.message}`);
+        }
+
+        for (const item of recent.slice(0, 5)) {
+            if (REQUIRED_PLAYERS.every(p => resolvedPlayers[p])) break;
+            if (testedUrls.has(item.url)) continue;
+            testedUrls.add(item.url);
+
+            info(`${item.title} → ${item.url}`);
+
+            let streams;
+            try {
+                streams = await scrapeFilmPage(item.url);
+            } catch (err) {
+                info(`scrape failed: ${err.message}`);
+                continue;
+            }
+            if (!streams || streams.length === 0) { info('0 streams'); continue; }
+
+            for (const stream of streams) {
+                if (resolvedPlayers[stream.player]) continue;
+                const resolved = await tryResolve(stream.player, stream.url);
+                if (!resolved) continue;
+
+                let videoOk = false;
+                try {
+                    videoOk = await verifyVideo(resolved.url, resolved.headers);
+                } catch {}
+
+                resolvedPlayers[stream.player] = { ...resolved, query: item.title, verified: videoOk };
+                ok(`${stream.player}: resolved${videoOk ? ' + video OK' : ' (video unverified)'} (${item.title})`);
             }
         }
     }

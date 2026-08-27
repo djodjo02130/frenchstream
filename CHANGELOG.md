@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.17
+
+- Fix son sans image dans Stremio (lecteur interne, Windows) : les CDN premium et vidzy inspectent le `User-Agent`. Face a celui de ffmpeg par defaut (`Lavf/...`) ils renvoient un leurre de 18 s en 1920x1080 (premium) ou refusent (vidzy), au lieu du film. Le serveur de Stremio transcodant avec ffmpeg, il sondait le leurre et generait une playlist de 5 segments au lieu de 1426 : audio present, video inexploitable. `proxyHeaders.request` porte desormais un `User-Agent` navigateur sur tous les flux, et plus seulement sur ceux dont le resolver fournit deja des en-tetes (premium n'en avait aucun). Mesure : avec un UA navigateur la duree sondee passe de 18 s a 5704 s. voe n'etait pas affecte (pas de filtrage sur l'UA).
+
 ## 1.10.16
 
 - Fix URL de base : `fstream.info` ne publie plus le miroir dans le `href` de `#mainUrl` (`href="#"` + redirection `onclick`). Le scraper prenait `#` comme BASE_URL → tout cassé (`Only absolute URLs are supported`). Résolution en chaîne landing → passerelle (`var FS_MIRROR`) → miroir, 3 sauts max (`lib/utils.js`, `parseMirrorFromHtml`).

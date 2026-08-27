@@ -1,6 +1,6 @@
 const { addonBuilder, serveHTTP } = require('stremio-addon-sdk');
 const { scrapeCatalog, scrapeFilmPage, scrapeSeriesPage, findBestMatch, searchFS, scrapeMetadata, scrapeTmdbId } = require('./lib/scraper');
-const { resolveBaseUrl, getBaseUrl } = require('./lib/utils');
+const { resolveBaseUrl, getBaseUrl, HEADERS } = require('./lib/utils');
 const { resolve } = require('./lib/resolvers');
 const cache = require('./lib/cache');
 
@@ -15,7 +15,7 @@ if (TMDB_API_KEY) console.log('[TMDB] API key configured');
 
 const manifest = {
     id: 'org.frenchstream.addon',
-    version: '1.10.16',
+    version: '1.10.17',
     name: 'French Stream',
     description: 'Films et Séries en streaming depuis FrenchStream',
     logo: 'https://fs9.lol/templates/starter/images/logo-fs.svg',
@@ -561,9 +561,15 @@ async function formatStreams(rawStreams, pageUrl, season, episode) {
                 if (isHls) {
                     stream.behaviorHints.notWebReady = true;
                 }
-                if (resolved.headers && Object.keys(resolved.headers).length > 0) {
-                    stream.behaviorHints.proxyHeaders = { request: resolved.headers };
-                }
+                // Les CDN (premium, vidzy) servent un leurre — un clip de 18 s — ou
+                // refusent la requete quand le User-Agent est celui de ffmpeg par defaut
+                // (`Lavf/...`). Le serveur de Stremio transcode avec ffmpeg : sans UA
+                // explicite il recupere le leurre, d'ou du son sans image. N'importe quel
+                // UA non-ffmpeg suffit. On en pose donc un sur TOUS les flux, pas seulement
+                // sur ceux dont le resolver fournit deja des en-tetes.
+                stream.behaviorHints.proxyHeaders = {
+                    request: { 'User-Agent': HEADERS['User-Agent'], ...(resolved.headers || {}) },
+                };
                 return stream;
             }
 
